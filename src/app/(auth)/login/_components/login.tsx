@@ -21,12 +21,16 @@ import { startTransition, useActionState, useEffect } from "react";
 import { login } from "../actions";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 
 export default function Login() {
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchemaForm),
     defaultValues: INITIAL_LOGIN_FORM,
   });
+
+  const { theme } = useTheme();
 
   const [loginState, loginAction, isPendingLogin] = useActionState(
     login,
@@ -54,12 +58,24 @@ export default function Login() {
     }
   }, [loginState, loginAction]);
 
+  const logoSrc =
+    theme === "dark"
+      ? "https://nwbgobqaazltwhxpusdv.supabase.co/storage/v1/object/public/images/assets/logo_dark.png"
+      : "https://nwbgobqaazltwhxpusdv.supabase.co/storage/v1/object/public/images/assets/logo_light.png";
+
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Welcome</CardTitle>
+        <Image
+          src={logoSrc}
+          alt="Logo Aplikasi"
+          width={120}
+          height={40}
+          className="mx-auto mb-4"
+        />
+        <CardTitle className="text-xl font-bold">Welcome Back!</CardTitle>
         <CardDescription className="text-center">
-          Login to access all Features
+          Manage sales, track inventory, and keep your business running
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -79,8 +95,11 @@ export default function Login() {
               placeholder="******"
               type="password"
             />
-            <Button type="submit">
-              {isPendingLogin ? <Loader2 className="animate-spin" /> : "Login"}
+            <Button
+              type="submit"
+              className="w-full mt-4 bg-blue-900 text-white font-bold"
+            >
+              {isPendingLogin ? <Loader2 className="animate-spin" /> : "Log In"}
             </Button>
           </form>
         </Form>
