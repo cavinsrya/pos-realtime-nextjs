@@ -17,12 +17,13 @@ import {
 } from "@/constants/auth-constants";
 import { Button } from "@/components/ui/button";
 import FormInput from "@/components/common/form-input";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { login } from "../actions";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Login() {
   const form = useForm<LoginForm>({
@@ -30,12 +31,17 @@ export default function Login() {
     defaultValues: INITIAL_LOGIN_FORM,
   });
 
+  const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
   const [loginState, loginAction, isPendingLogin] = useActionState(
     login,
     INITIAL_STATE_LOGIN_FORM
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const onSubmit = form.handleSubmit(async (data) => {
     const formData = new FormData();
@@ -62,6 +68,35 @@ export default function Login() {
     theme === "dark"
       ? "https://nwbgobqaazltwhxpusdv.supabase.co/storage/v1/object/public/images/assets/logo_dark.png"
       : "https://nwbgobqaazltwhxpusdv.supabase.co/storage/v1/object/public/images/assets/logo_light.png";
+
+  if (!mounted) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          {/* Skeleton untuk logo */}
+          <Skeleton className="w-[120px] h-[40px] mx-auto mb-4" />
+          {/* Skeleton untuk judul */}
+          <Skeleton className="w-2/3 h-7 mx-auto" />
+          {/* Skeleton untuk deskripsi */}
+          <Skeleton className="w-full h-5 mx-auto mt-2" />
+        </CardHeader>
+        <CardContent>
+          {/* Skeleton untuk form */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

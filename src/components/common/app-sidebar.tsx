@@ -31,16 +31,22 @@ import {
 } from "@/constants/sidebar-constant";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/actions/auth-action";
+import { useAuthStore } from "@/stores/auth-store";
+import Link from "next/link";
+import { Skeleton } from "../ui/skeleton";
+import { useEffect, useState } from "react";
 
 export function AppSidebar() {
   const { isMobile } = useSidebar();
-  const { theme } = useTheme();
   const pathname = usePathname();
-  const profile = {
-    name: "Kevin",
-    role: "admin",
-    avatar_url: "",
-  };
+  const profile = useAuthStore((state) => state.profile);
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const logoSrc =
     theme === "dark"
@@ -53,13 +59,20 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Image
-                src={logoSrc}
-                alt="Logo Aplikasi"
-                width={140}
-                height={0}
-                className="mt-4 mx-auto h-[50px] object-contain"
-              />
+              {!mounted ? (
+                <Skeleton className="w-[140px] h-[50px] mt-4 mx-auto" />
+              ) : (
+                <div className="w-[140px] h-[50px] mx-auto mt-4 relative">
+                  <Image
+                    src={logoSrc}
+                    alt="Logo Aplikasi"
+                    width={120}
+                    height={80}
+                    className="object-contain mx-auto"
+                    priority
+                  />
+                </div>
+              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -72,16 +85,18 @@ export function AppSidebar() {
                 (item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild tooltip={item.title}>
-                      <a
+                      <Link
                         href={item.url}
-                        className={cn("px-4 py-3 h-auto", {
-                          "bg-blue-900 text-white hover:bg-blue-900 hover:text-white":
-                            pathname === item.url,
-                        })}
+                        className={cn(
+                          "px-4 py-3 h-auto transition-colors duration-200",
+                          pathname === item.url
+                            ? "bg-blue-900 text-white hover:!bg-blue-900"
+                            : "hover:!bg-purple-900/70"
+                        )}
                       >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
@@ -93,54 +108,74 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="" alt=""></AvatarImage>
-                    <AvatarFallback className="rounded-lg">A</AvatarFallback>
-                  </Avatar>
-                  <div className="leading-tight">
-                    <h4 className="truncate font-medium">Kevin</h4>
-                    <p className="text-muted-foreground truncate text-xs">
-                      Admin
-                    </p>
-                  </div>
-                  <EllipsisVertical className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-56 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel>
-                  <div className="flex items-center gap-2 px-1 py-1.5">
+            {!profile.name || !profile.role ? (
+              <div className="flex items-center gap-3 p-4">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-3 w-[100px]" />
+                  <Skeleton className="h-3 w-[60px]" />
+                </div>
+              </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src="" alt=""></AvatarImage>
-                      <AvatarFallback className="rounded-lg">A</AvatarFallback>
+                      <AvatarImage
+                        src={profile.avatar_url}
+                        alt={profile.name}
+                      ></AvatarImage>
+                      <AvatarFallback className="rounded-lg">
+                        {profile.name?.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="leading-tight">
-                      <h4 className="truncate font-medium">Kevin</h4>
-                      <p className="text-muted-foreground truncate text-xs">
-                        Admin
+                      <h4 className="truncate font-medium">{profile.name}</h4>
+                      <p className="text-muted-foreground truncate text-xs capitalize">
+                        {profile.role}
                       </p>
                     </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <LogOut />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <EllipsisVertical className="ml-auto size-4" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="min-w-56 rounded-lg"
+                  side={isMobile ? "bottom" : "right"}
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownMenuLabel>
+                    <div className="flex items-center gap-2 px-1 py-1.5">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage
+                          src={profile.avatar_url}
+                          alt={profile.name}
+                        ></AvatarImage>
+                        <AvatarFallback className="rounded-lg">
+                          {profile.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="leading-tight">
+                        <h4 className="truncate font-medium">{profile.name}</h4>
+                        <p className="text-muted-foreground truncate text-xs capitalize">
+                          {profile.role}
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => signOut()}>
+                      <LogOut />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
