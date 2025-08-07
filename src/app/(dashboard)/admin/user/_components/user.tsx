@@ -12,19 +12,27 @@ import { useQuery } from "@tanstack/react-query";
 import { Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import React, { useMemo } from "react";
 import { toast } from "sonner";
+import DialogCreateUser from "./dialog-create-user";
 
 export default function UserManagement() {
   const supabase = createClient();
-  const { currentPage, currentLimit, handleChangeLimit, handleChangePage } =
-    useDataTable();
+  const {
+    currentPage,
+    currentLimit,
+    currentSearch,
+    handleChangeLimit,
+    handleChangePage,
+    handleChangeSearch,
+  } = useDataTable();
   const { data: users, isLoading } = useQuery({
-    queryKey: ["users", currentPage, currentLimit],
+    queryKey: ["users", currentPage, currentLimit, currentSearch],
     queryFn: async () => {
       const result = await supabase
         .from("profiles")
         .select("*", { count: "exact" })
         .range((currentPage - 1) * currentLimit, currentPage * currentLimit - 1)
-        .order("created_at");
+        .order("created_at")
+        .ilike("name", `%${currentSearch}%`);
 
       if (result.error)
         toast.error("Get User data Failed", {
@@ -80,7 +88,10 @@ export default function UserManagement() {
       <div className="flex flex-col lg:flex-row mb-4 gap-2 justify-between w-full">
         <h1 className="text-2xl font-bold mb-4">User Management</h1>
         <div className="flex gap-2">
-          <Input placeholder="Search by name" />
+          <Input
+            placeholder="Search by name"
+            onChange={(e) => handleChangeSearch(e.target.value)}
+          />
           <Dialog>
             <DialogTrigger asChild>
               <Button className="bg-blue-900 text-white cursor-pointer hover:bg-purple-900/70">
@@ -88,6 +99,7 @@ export default function UserManagement() {
                 Create User
               </Button>
             </DialogTrigger>
+            <DialogCreateUser />
           </Dialog>
         </div>
       </div>
